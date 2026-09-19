@@ -195,6 +195,11 @@ export default function App() {
     const text = chatInput.trim()
     if (!text || streaming) return
     const provider = providers.find(p => p.id === chatProvider) || providers[0]
+    if (provider.apiKey.includes('YOUR_')) {
+      setMessages(m => [...m, { role: 'user', content: text, ts: Date.now() }, { role: 'assistant', content: `🔑 API key não configurada para ${provider.name} (${provider.id}).\n\nVá em **Provedores → ${provider.id}** e cole sua key.\n\nPara FreeLLMAPI: http://127.0.0.1:3001 → Keys → copie freellmapi-...\nPara UnoRouter: https://unorouter.com/tokens\nPara JustWoker: https://api.justwoker.icu/dashboard/overview`, ts: Date.now() }])
+      setChatInput('')
+      return
+    }
     const model = chatModel
     const now = Date.now()
     const nextMsgs: Msg[] = [...messages, { role: 'user' as const, content: text, ts: now }]
@@ -253,7 +258,19 @@ export default function App() {
         setMessages(m => { const n = [...m]; persistChat(n); return n })
       }
     } catch (e: any) {
-      setMessages(m => { const n = [...m]; n[n.length - 1] = { role: 'assistant', content: `⚠️ Erro: ${e.message?.slice(0, 500)}`, ts: Date.now() }; return n })
+      let msg = e.message || 'Erro desconhecido'
+      const raw = String(e.message || '')
+      if (raw.includes('401') || raw.includes('403') || raw.includes('YOUR_') || raw.includes('API key')) {
+        msg = `🔑 API key inválida/não configurada para ${provider.name}. Vá em Provedores → ${provider.id} e cole sua key.`
+      } else if (raw.includes('429') || raw.toLowerCase().includes('too many requests') || raw.includes('rate_limit')) {
+        msg = `⏳ Limite free 1/min no ${provider.name}. Aguarde 60s ou troque para freellmapi/auto (tem fallback).`
+      } else if (raw.toLowerCase().includes('timeout') || raw.includes('tempo limite')) {
+        msg = `⏱️ ${provider.name} demorou. Tente novamente ou troque de provider.`
+      } else if (raw.includes('Failed to fetch') || raw.includes('NetworkError') || raw.includes('ECONNREFUSED')) {
+        msg = `📡 Sem conexão com ${provider.name} (${provider.baseURL}). Verifique internet ou se o FreeLLMAPI está em http://127.0.0.1:3001`
+      }
+      const detail = raw.slice(0, 300)
+      setMessages(m => { const n = [...m]; n[n.length - 1] = { role: 'assistant', content: `⚠️ ${msg}\n\nDetalhe: ${detail}`, ts: Date.now() }; showToast(msg.slice(0, 50)); return n })
     } finally { setStreaming(false) }
   }
 
