@@ -16,6 +16,12 @@ contextBridge.exposeInMainWorld('hermes', {
     get: () => ipcRenderer.invoke('providers:get'),
     save: (d: any) => ipcRenderer.invoke('providers:save', d),
   },
+  chats: {
+    list: () => ipcRenderer.invoke('chats:list'),
+    save: (c: any) => ipcRenderer.invoke('chats:save', c),
+    load: (id: string) => ipcRenderer.invoke('chats:load', id),
+    delete: (id: string) => ipcRenderer.invoke('chats:delete', id),
+  },
   dialog: {
     openFile: () => ipcRenderer.invoke('dialog:openFile'),
   },

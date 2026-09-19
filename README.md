@@ -25,11 +25,43 @@ App desktop feito do zero, controle total, inspirado no Hermes. **4 skills do op
 
 > Na primeira execução o app copia essas 4 de `hermes-app/skills` → `%APPDATA%\hermes-app\skills` se a pasta do usuário estiver vazia.
 
-### Provedores já plugados
+### Provedores já plugados (exemplo)
 
-- **FreeLLMAPI (local)** `http://127.0.0.1:3001/v1` — `auto`, `gemini-2.5-flash`, `codestral-latest` (openrouter key já injetada)
-- **JustWoker (Anthropic)** `https://api.justwoker.icu/v1` — `claude-opus-4-8` (`sk-CW9...`)
+- **FreeLLMAPI (local)** `http://127.0.0.1:3001/v1` — `auto`, `gemini-2.5-flash`, `codestral-latest`
+- **JustWoker (Anthropic)** `https://api.justwoker.icu/v1` — `claude-opus-4-8`
 - **UnoRouter** `https://api.unorouter.com/v1` — `claude-opus-5`, `glm-5.3-flash:free`
+
+## 🔌 Como adicionar provedoras (só executar e usar)
+
+> O Noshokk já vem com 3 provedores de exemplo. Você pode adicionar qualquer API compatível com OpenAI/Anthropic em 30s.
+
+**Opção 1 — Pela UI (recomendado, sem código):**
+1. Abra o Noshokk → aba **Provedores**
+2. Clique **+ Adicionar** (ou edite `providers.json` direto)
+3. Preencha: `Nome` (ex: `Groq`), `baseURL` (ex: `https://api.groq.com/openai/v1`), `apiKey` (`gsk_...`), `models` (ex: `llama-3.3-70b, mixtral-8x7b`)
+4. Salve — já aparece no seletor do **Chat**
+
+**Opção 2 — Arquivo `providers.json` (controle total):**
+```json
+// %APPDATA%\hermes-app\providers.json  ou  C:\Users\shokk123\hermes-app\providers.json
+{
+  "providers": [
+    { "id": "groq", "name": "Groq", "baseURL": "https://api.groq.com/openai/v1", "apiKey": "gsk_SEU_KEY", "models": ["llama-3.3-70b-versatile", "mixtral-8x7b-32768"] },
+    { "id": "openrouter", "name": "OpenRouter", "baseURL": "https://openrouter.ai/api/v1", "apiKey": "sk-or-v1_SEU_KEY", "models": ["google/gemini-2.5-flash", "anthropic/claude-3.5-sonnet"] }
+  ]
+}
+```
+Reinicie o app — novos provedores aparecem no Chat.
+
+**Opção 3 — Via FreeLLMAPI (gateway local, fallback automático):**
+1. Abra `http://127.0.0.1:3001` → **Keys**
+2. Cole sua key (ex: `gsk_...` Groq, `sk-or-...` OpenRouter, `AIza...` Google)
+3. O Noshokk em `freellmapi/auto` já roteia automaticamente e faz fallback se um cair
+
+**Dicas:**
+- **OpenAI-compatível**: use `https://api.openai.com/v1` + `sk-...` + `gpt-4o, gpt-4o-mini`
+- **Anthropic nativo** (JustWoker/claude): `https://api.anthropic.com` + `x-api-key` + `claude-3-5-sonnet...`
+- Teste rápido no Chat: selecione o novo provider/modelo e mande `20+20` — tem que responder `40`.
 
 ## 📦 Instalação (usuário final)
 

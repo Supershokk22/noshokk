@@ -159,3 +159,36 @@ ipcMain.handle('dialog:openFile', async () => {
   const r = await dialog.showOpenDialog({ properties: ['openFile'] })
   return r.filePaths[0] || null
 })
+
+// --- Chats (histórico) ---
+ipcMain.handle('chats:list', async () => {
+  const dir = path.join(getUserData(), 'chats')
+  if (!fs.existsSync(dir)) return []
+  const files = fs.readdirSync(dir).filter(f => f.endsWith('.json'))
+  const chats = files.map(f => {
+    try {
+      const data = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'))
+      return { id: data.id, title: data.title || 'Sem título', createdAt: data.createdAt, updatedAt: data.updatedAt, preview: data.messages?.[1]?.content?.slice(0, 80) || data.messages?.[0]?.content?.slice(0, 80) || '' }
+    } catch { return null }
+  }).filter(Boolean) as any[]
+  return chats.sort((a, b) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt))
+})
+ipcMain.handle('chats:save', async (_e, chat: any) => {
+  const dir = path.join(getUserData(), 'chats')
+  fs.mkdirSync(dir, { recursive: true })
+  const id = chat.id || Date.now().toString(36)
+  const now = Date.now()
+  const data = { id, title: chat.title || chat.messages?.[0]?.content?.slice(0, 40) || 'Nova conversa', createdAt: chat.createdAt || now, updatedAt: now, messages: chat.messages }
+  fs.writeFileSync(path.join(dir, `${id}.json`), JSON.stringify(data, null, 2), 'utf8')
+  return data
+})
+ipcMain.handle('chats:load', async (_e, id: string) => {
+  const p = path.join(getUserData(), 'chats', `${id}.json`)
+  if (!fs.existsSync(p)) return null
+  try { return JSON.parse(fs.readFileSync(p, 'utf8')) } catch { return null }
+})
+ipcMain.handle('chats:delete', async (_e, id: string) => {
+  const p = path.join(getUserData(), 'chats', `${id}.json`)
+  fs.rmSync(p, { force: true })
+  return { ok: true }
+})
